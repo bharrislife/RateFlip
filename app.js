@@ -1,0 +1,93 @@
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed', err));
+}
+
+const micBtn = document.getElementById('mic');
+const statusEl = document.getElementById('status');
+const resultEl = document.getElementById('result');
+
+let exchangeRate = null; // VND per 1 USD
+
+// Fetch exchange rate (USD base) and compute VND per USD
+async function fetchRate() {
+  try {
+    const resp = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await resp.json();
+    if (data.result === 'success' && data.rates && data.rates.VND) {
+      exchangeRate = data.rates.VND; // VND per USD
+      console.log('Rate fetched', exchangeRate);
+    } else {
+      throw new Error('Invalid response');
+    }
+  } catch (e) {
+    console.error('Rate fetch error', e);
+    statusEl.textContent = 'Unable to retrieve exchange rate.';
+  }
+}
+
+// Simple number extraction from spoken text
+function extractNumber(text) {
+  // Remove commas and non-digits, also handle spoken words to numbers via basic mapping
+  const cleaned = text.replace(/[,\.]/g, '').replace(/[^0-9]/g, '');
+  const num = parseInt(cleaned, 10);
+  return isNaN(num) ? null : num;
+}
+
+function speakResult(message) {
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(message);
+    speechSynthesis.speak(utter);
+  }
+}
+
+async function handleSpeech() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    statusEl.textContent = 'Speech recognition not supported.';
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognizer = new SpeechRecognition();
+  recognizer.lang = 'en-US';
+  recognizer.interimResults = false;
+  recognizer.maxAlternatives = 1;
+  statusEl.textContent = 'Listening...';
+  recognizer.start();
+
+  recognizer.onresult = async (event) => {
+    const transcript = event.results[0][0].transcript;
+    console.log('Heard:', transcript);
+    const amountVND = extractNumber(transcript);
+    if (amountVND === null) {
+      statusEl.textContent = 'Could not parse amount. Try again.';
+      return;
+    }
+    if (exchangeRate === null) {
+      await fetchRate();
+    }
+    if (exchangeRate === null) {
+      statusEl.textContent = 'Rate unavailable.';
+      return;
+    }
+    const usd = amountVND / exchangeRate;
+    const usdRounded = usd.toFixed(2);
+    const message = `That's $${usdRounded} USD`;
+    resultEl.textContent = message;
+    statusEl.textContent = '';
+    speakResult(message);
+  };
+
+  recognizer.onerror = (event) => {
+    console.error('Speech error', event.error);
+    statusEl.textContent = 'Error: ' + event.error;
+  };
+
+  recognizer.onend = () => {
+    console.log('Speech ended');
+  };
+}
+
+micBtn.addEventListener('click', handleSpeech);
+
+// Pre-fetch rate on load for faster conversion
+fetchRate();
