@@ -89,5 +89,10 @@ async function handleSpeech() {
 
 micBtn.addEventListener('click', handleSpeech);
 
+document.getElementById('reset').addEventListener('click', () => {
+  resultEl.textContent = '';
+  statusEl.textContent = 'Tap the mic and speak an amount in VND.';
+});
+
 // Pre-fetch rate on load for faster conversion
 fetchRate();
