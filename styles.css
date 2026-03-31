@@ -19,6 +19,10 @@ body {
   flex-direction: column;
   min-height: 300px;
   justify-content: space-between;
+  align-items: center;
+}
+h1 {
+  margin: 0 0 1rem 0;
 }
 #mic {
   font-size: 3rem;
@@ -47,7 +51,14 @@ body {
 #reset:active {
   background: #c0392b;
 }
-#status, #result {
+#result {
   margin-top: 1rem;
-  font-size: 1.2rem;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #4CAF50;
+}
+#status {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  color: #666;
 }
