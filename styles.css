@@ -30,6 +30,19 @@ body {
 #mic:active {
   background: #45a049;
 }
+#reset {
+  font-size: 1rem;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+#reset:active {
+  background: #444;
+}
 #status, #result {
   margin-top: 1rem;
   font-size: 1.2rem;
